@@ -1,30 +1,27 @@
 import flet as ft
-
 from pages.index import view_index
 
 
+def main(page: ft.Page) -> None:
 
-def main(page: ft.Page):
-    
     page.title = "Translator App"
-    page.vertical_alignment = "center"
-    page.horizontal_alignment = "center"
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.fonts = {"manrope": "Manrope-SemiBold.ttf"}
-    page.theme_mode = "light"
+    page.theme_mode = ft.ThemeMode.LIGHT
 
-    page_index = view_index()
+    page_index: ft.View = view_index()
 
     def route_change(route) -> None:
         page.views.clear()
         if page.route == "/":
             page.views.append(page_index)
 
-
         page.update()
 
     def view_pop(view) -> None:
         page.views.pop()
-        top_view = page.views[-1]
+        top_view: ft.View = page.views[-1]
         page.go(top_view.route)
 
     page.on_route_change = route_change
@@ -36,4 +33,4 @@ def main(page: ft.Page):
     page.update()
 
 
-ft.app(target=main,assets_dir="assets")
+ft.app(target=main, assets_dir="assets", view=ft.AppView.WEB_BROWSER)

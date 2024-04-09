@@ -1,10 +1,15 @@
 import flet as ft
 from flet import Text, View
-from translate import Translator
+from googletrans import Translator
+from googletrans.constants import LANGUAGES
+from googletrans.models import Translated
+
+dict_bahasa: dict[str, str] = {value.title(): key for key, value in LANGUAGES.items()}
+bahasas: list[str] = list(dict_bahasa.keys())
+trans: Translator = Translator()
 
 
 def view_index() -> ft.View:
-    translator: Translator = Translator(to_lang="id")
 
     def check_input(e: ft.ControlEvent) -> None:
         e.control.counter_text = f"Jumlah Huruf {(500 - len(input.value)) if len(input.value) <= 500 else 0} Tersisa"
@@ -28,9 +33,23 @@ def view_index() -> ft.View:
             e.control.icon = ft.icons.DARK_MODE
             e.page.update()
 
+    def swicth_bahasa(e: ft.ControlEvent) -> None:
+        bahasa_input.value, bahasa_output.value, input.value, output.value = (
+            bahasa_output.value,
+            bahasa_input.value,
+            output.value,
+            input.value,
+        )
+        e.page.update()
+
     def terjemahan(e: ft.ControlEvent) -> None:
         if len(input.value) <= 500:
-            output.value = translator.translate(input.value)
+            res: Translated = trans.translate(
+                text=input.value,
+                dest=dict_bahasa[bahasa_output.value],
+                src=dict_bahasa[bahasa_input.value],
+            )
+            output.value = res.text
             e.page.update()
         else:
             input.error_text = "Maksimal 500 huruf"
@@ -50,19 +69,13 @@ def view_index() -> ft.View:
     bahasa_input: ft.Dropdown = ft.Dropdown(
         expand=True,
         value="English",
-        options=[
-            ft.dropdown.Option("English"),
-            ft.dropdown.Option("Indonesia"),
-        ],
+        options=[ft.dropdown.Option(text=bahasa) for bahasa in bahasas],
     )
 
     bahasa_output: ft.Dropdown = ft.Dropdown(
         expand=True,
-        value="Indonesia",
-        options=[
-            ft.dropdown.Option("Indonesia"),
-            ft.dropdown.Option("English"),
-        ],
+        value="Indonesian",
+        options=[ft.dropdown.Option(text=bahasa) for bahasa in bahasas],
     )
 
     input: ft.TextField = ft.TextField(
@@ -81,8 +94,8 @@ def view_index() -> ft.View:
 
     return View(
         route="/",
-        vertical_alignment="center",
-        horizontal_alignment="center",
+        vertical_alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         controls=[
             ft.Container(
                 width=800,
@@ -98,7 +111,7 @@ def view_index() -> ft.View:
                 clip_behavior=ft.ClipBehavior.HARD_EDGE,
                 # bgcolor="yellow",
                 content=ft.Column(
-                    horizontal_alignment="center",
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     height=800,
                     controls=[
                         ft.Row(
@@ -116,10 +129,12 @@ def view_index() -> ft.View:
                         ),
                         ft.Divider(height=24, color="transparent"),
                         ft.Row(
-                            alignment="center",
+                            alignment=ft.MainAxisAlignment.CENTER,
                             controls=[
                                 bahasa_input,
-                                ft.IconButton(icon=ft.icons.COMPARE_ARROWS),
+                                ft.IconButton(
+                                    icon=ft.icons.COMPARE_ARROWS, on_click=swicth_bahasa
+                                ),
                                 bahasa_output,
                             ],
                         ),
