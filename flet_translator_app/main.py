@@ -1,10 +1,10 @@
 import flet as ft
+
 from pages.index import view_index
 
 
 def main(page: ft.Page) -> None:
-
-    page.title = "Translator App"
+    page.title = "Translator App | Flet"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.fonts = {"manrope": "Manrope-SemiBold.ttf"}

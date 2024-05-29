@@ -1,5 +1,7 @@
+import asyncio
+
 import flet as ft
-from flet import Text, View
+from flet import View
 from googletrans import Translator
 from googletrans.constants import LANGUAGES
 from googletrans.models import Translated
@@ -10,23 +12,18 @@ trans: Translator = Translator()
 
 
 def view_index() -> ft.View:
-
-    def check_input(e: ft.ControlEvent) -> None:
-        e.control.counter_text = f"Jumlah Huruf {(500 - len(input.value)) if len(input.value) <= 500 else 0} Tersisa"
-        e.page.update()
-
-    def thememode(e: ft.ControlEvent) -> None:
+    def theme_mode(e: ft.ControlEvent) -> None:
         if e.page.theme_mode == "dark":
             e.page.theme_mode = "light"
             e.control.icon = ft.icons.LIGHT_MODE
-            input.border_color = "dark"
+            input_text.border_color = "dark"
             output.border_color = "dark"
             bahasa_input.border_color = "dark"
             bahasa_output.border_color = "dark"
             e.page.update()
         else:
             e.page.theme_mode = "dark"
-            input.border_color = "white"
+            input_text.border_color = "white"
             output.border_color = "white"
             bahasa_input.border_color = "white"
             bahasa_output.border_color = "white"
@@ -34,142 +31,142 @@ def view_index() -> ft.View:
             e.page.update()
 
     def swicth_bahasa(e: ft.ControlEvent) -> None:
-        bahasa_input.value, bahasa_output.value, input.value, output.value = (
+        bahasa_input.value, bahasa_output.value, input_text.value, output.value = (
             bahasa_output.value,
             bahasa_input.value,
             output.value,
-            input.value,
+            input_text.value,
         )
         e.page.update()
 
-    def terjemahan(e: ft.ControlEvent) -> None:
-        if len(input.value) <= 500:
+    def copy_clibboard(e: ft.ControlEvent) -> None:
+        e.page.set_clipboard(output.value)
+        e.page.update()
+
+    async def terjemahan(e: ft.ControlEvent) -> None:
+        if len(input_text.value) == 0:
+            await asyncio.sleep(0.5)
+            output.visible, copy_button.visible = 0, 0
+            e.page.update()
+
+        if len(input_text.value) <= 500:
+            await asyncio.sleep(2)
             res: Translated = trans.translate(
-                text=input.value,
+                text=input_text.value,
                 dest=dict_bahasa[bahasa_output.value],
                 src=dict_bahasa[bahasa_input.value],
             )
             output.value = res.text
+            output.visible, copy_button.visible = True, True
             e.page.update()
         else:
-            input.error_text = "Maksimal 500 huruf"
-            input.value = ""
+            input_text.error_text = "Maksimal 500 huruf"
+            input_text.value = ""
             e.page.update()
 
     def clear_output(e: ft.ControlEvent) -> None:
+        output.visible, copy_button.visible = False, False
         output.value = ""
-        input.error_text = ""
-        input.counter_text = ""
+        input_text.error_text = ""
+        input_text.counter_text = ""
         e.page.update()
 
-    def clear_input(e: ft.ControlEvent) -> None:
-        input.value = ""
+    async def clear_input(e: ft.ControlEvent) -> None:
+        input_text.value = ""
+        await asyncio.sleep(0.5)
+        output.visible, copy_button.visible = False, False
         e.page.update()
 
     bahasa_input: ft.Dropdown = ft.Dropdown(
         expand=True,
+        alignment=ft.alignment.center_left,
         value="English",
         options=[ft.dropdown.Option(text=bahasa) for bahasa in bahasas],
     )
 
     bahasa_output: ft.Dropdown = ft.Dropdown(
         expand=True,
+        alignment=ft.alignment.center_left,
         value="Indonesian",
         options=[ft.dropdown.Option(text=bahasa) for bahasa in bahasas],
     )
 
-    input: ft.TextField = ft.TextField(
-        hint_text="Masukan text",
+    input_text: ft.TextField = ft.TextField(
+        hint_text="Masukan tesk",
         # expand=True,
         multiline=True,
+        max_length=500,
         on_focus=clear_output,
-        on_change=check_input,
+        on_change=terjemahan,
     )
 
     output: ft.TextField = ft.TextField(
-        expand=True,
+        # expand=True,
+        visible=False,
         hint_text="Terjemahan",
         multiline=True,
     )
-
+    copy_button: ft.IconButton = ft.IconButton(
+        icon=ft.icons.COPY_ALL_ROUNDED,
+        on_click=copy_clibboard,
+        visible=False,
+    )
     return View(
         route="/",
-        vertical_alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        auto_scroll=True,
+        scroll=ft.ScrollMode.ALWAYS,
         controls=[
-            ft.Container(
-                width=800,
-                padding=24,
-                border_radius=24,
-                shadow=ft.BoxShadow(
-                    spread_radius=1,
-                    blur_radius=4,
-                    color=ft.colors.BLUE_GREY_300,
-                    offset=ft.Offset(0, 0),
-                    blur_style=ft.ShadowBlurStyle.OUTER,
-                ),
-                clip_behavior=ft.ClipBehavior.HARD_EDGE,
-                # bgcolor="yellow",
-                content=ft.Column(
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    height=800,
-                    controls=[
-                        ft.Row(
-                            alignment="end",
-                            controls=[
-                                ft.IconButton(
-                                    icon=ft.icons.LIGHT_MODE, on_click=thememode
-                                )
-                            ],
-                        ),
-                        ft.Text(
-                            value="Translator App",
-                            font_family="manrope",
-                            theme_style=ft.TextThemeStyle.HEADLINE_LARGE,
-                        ),
-                        ft.Divider(height=24, color="transparent"),
-                        ft.Row(
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            controls=[
-                                bahasa_input,
-                                ft.IconButton(
-                                    icon=ft.icons.COMPARE_ARROWS, on_click=swicth_bahasa
-                                ),
-                                bahasa_output,
-                            ],
-                        ),
-                        ft.Divider(height=24, color="transparent"),
-                        ft.Row(
-                            vertical_alignment=ft.CrossAxisAlignment.START,
-                            height=400,
-                            controls=[
-                                ft.Column(
-                                    expand=True,
-                                    controls=[
-                                        input,
-                                        ft.IconButton(
-                                            icon=ft.icons.DELETE_OUTLINE,
-                                            on_click=clear_input,
-                                        ),
-                                    ],
-                                ),
-                                output,
-                            ],
-                        ),
-                        ft.Divider(height=24, color="transparent"),
-                        ft.FilledButton(
-                            height=48,
-                            style=ft.ButtonStyle(
-                                shape=ft.RoundedRectangleBorder(radius=4),
+            ft.Column(
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                width=600,
+                controls=[
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.END,
+                        controls=[
+                            ft.IconButton(icon=ft.icons.LIGHT_MODE, on_click=theme_mode)
+                        ],
+                    ),
+                    ft.Text(
+                        value="Translator App",
+                        font_family="manrope",
+                        theme_style=ft.TextThemeStyle.HEADLINE_SMALL,
+                    ),
+                    ft.Divider(height=24, color="transparent"),
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.START,
+                        controls=[
+                            bahasa_input,
+                            ft.IconButton(
+                                icon=ft.icons.COMPARE_ARROWS, on_click=swicth_bahasa
                             ),
-                            content=Text(
-                                value="Terjemah",
-                                font_family="manrope",
+                            bahasa_output,
+                        ],
+                    ),
+                    ft.Divider(height=24, color="transparent"),
+                    ft.Row(
+                        vertical_alignment=ft.CrossAxisAlignment.START,
+                        wrap=True,
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    input_text,
+                                    ft.IconButton(
+                                        icon=ft.icons.DELETE_OUTLINE,
+                                        on_click=clear_input,
+                                    ),
+                                ],
                             ),
-                            on_click=terjemahan,
-                        ),
-                    ],
-                ),
+                            ft.Column(
+                                controls=[
+                                    output,
+                                    copy_button,
+                                ],
+                            ),
+                        ],
+                    ),
+                    ft.Divider(height=24, color="transparent"),
+                ],
             )
         ],
     )

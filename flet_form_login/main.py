@@ -1,4 +1,6 @@
 import flet as ft
+from flet_core import View
+
 from pages.form_login import view_login
 from pages.form_signup import view_signup
 from pages.index import view_index
@@ -12,11 +14,11 @@ def main(page: ft.Page):
     page.fonts = {"manrope": "Manrope-SemiBold.ttf"}
     page.theme_mode = "light"
 
-    page_login = view_login()
-    page_signup = view_signup()
-    page_index = view_index()
+    page_login: View = view_login()
+    page_signup: View = view_signup()
+    page_index: View = view_index()
 
-    def route_change(route) -> None:
+    def route_change(route: object) -> None:
         page.views.clear()
         if page.route == "/home":
             page.views.append(page_index)
@@ -29,7 +31,7 @@ def main(page: ft.Page):
 
         page.update()
 
-    def view_pop(view) -> None:
+    def view_pop(view: object) -> None:
         page.views.pop()
         top_view = page.views[-1]
         page.go(top_view.route)
